@@ -1,3 +1,10 @@
 node_modules/
 video/renders/
 video/.thumbnails/
+# media kept out of the public repo (speaker footage, keyed plates, renders, scratch)
+video/assets/footage/
+video/work/
+video/renders/
+video/snapshots/
+video/.transcode-cache/
+video/assets/audio/voice.wav

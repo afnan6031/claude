@@ -1,10 +1,65 @@
 <!doctype html>
-<html lang="en">
+<html lang="ur">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1920, height=1080" />
+    <meta name="viewport" content="width=1080, height=1920" />
     <script src="assets/gsap.min.js"></script>
     <style>
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/inter-latin-400-normal.woff2") format("woff2");
+        font-weight: 400;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/inter-latin-500-normal.woff2") format("woff2");
+        font-weight: 500;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/inter-latin-600-normal.woff2") format("woff2");
+        font-weight: 600;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/inter-latin-700-normal.woff2") format("woff2");
+        font-weight: 700;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/inter-latin-800-normal.woff2") format("woff2");
+        font-weight: 800;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "Noto Nastaliq Urdu";
+        src: url("assets/fonts/noto-nastaliq-urdu-arabic-400-normal.woff2") format("woff2");
+        font-weight: 400;
+        font-display: block;
+      }
+      @font-face {
+        font-family: "Noto Nastaliq Urdu";
+        src: url("assets/fonts/noto-nastaliq-urdu-arabic-700-normal.woff2") format("woff2");
+        font-weight: 700;
+        font-display: block;
+      }
+
+      :root {
+        --ink: #f5f5f7;
+        --ink-2: rgba(245, 245, 247, 0.72);
+        --ink-3: rgba(245, 245, 247, 0.5);
+        --glass: rgba(30, 31, 36, 0.58);
+        --glass-strong: rgba(24, 25, 29, 0.78);
+        --hair: rgba(255, 255, 255, 0.14);
+        --blue: #0a84ff;
+        --orange: #ff9f0a;
+        --green: #30d158;
+        --red: #ff6961;
+      }
       * {
         margin: 0;
         padding: 0;
@@ -12,25 +67,634 @@
       }
       html,
       body {
-        margin: 0;
-        width: 1920px;
-        height: 1080px;
+        width: 1080px;
+        height: 1920px;
         overflow: hidden;
-        background: #0a0a0a;
+        background: #0e0f12;
+        font-family: "Inter", "Noto Nastaliq Urdu", sans-serif;
+        color: var(--ink);
       }
       #root {
+        position: relative;
         width: 100%;
         height: 100%;
+        overflow: hidden;
+        background: #0e0f12;
+      }
+      .ur {
+        font-family: "Noto Nastaliq Urdu", "Inter", sans-serif;
+        direction: rtl;
+      }
+      .num {
+        font-family: "Inter", sans-serif;
+        font-feature-settings: "tnum" 1;
+        direction: ltr;
+        unicode-bidi: isolate;
+      }
+
+      /* ---------- camera layer (shakes / pushes) ---------- */
+      #camera {
+        position: absolute;
+        inset: 0;
+      }
+      #backdrop {
+        position: absolute;
+        inset: -60px;
+        background:
+          radial-gradient(ellipse 620px 760px at 50% 34%, rgba(126, 131, 142, 0.55), rgba(126, 131, 142, 0) 70%),
+          radial-gradient(ellipse 1200px 900px at 50% 40%, #33363d 0%, #1d1f24 55%, #0e0f12 100%);
+      }
+      #backdrop-floor {
+        position: absolute;
+        left: -60px;
+        right: -60px;
+        bottom: -60px;
+        height: 900px;
+        background: linear-gradient(180deg, rgba(14, 15, 18, 0) 0%, rgba(10, 11, 13, 0.85) 100%);
+      }
+      #vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 760px 1150px at 50% 45%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.55) 100%);
+        pointer-events: none;
+      }
+      #behind {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 150px;
+        text-align: center;
+        font-family: "Inter", sans-serif;
+        font-weight: 800;
+        font-size: 222px;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        color: transparent;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.28) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        opacity: 0;
+      }
+      #subject-wrap {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 1920px;
+        transform-origin: 50% 30%;
+      }
+      #subject {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+      }
+      #subject-shadow {
+        position: absolute;
+        left: 170px;
+        top: 980px;
+        width: 740px;
+        height: 1100px;
+        background: radial-gradient(ellipse at 50% 30%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0) 65%);
+        filter: blur(30px);
+      }
+
+      /* ---------- UI layer ---------- */
+      .glass {
+        position: absolute;
+        background: var(--glass);
+        border: 1.5px solid var(--hair);
+        border-radius: 44px;
+        box-shadow:
+          0 30px 80px rgba(0, 0, 0, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(28px) saturate(140%);
+        -webkit-backdrop-filter: blur(28px) saturate(140%);
+        overflow: hidden;
+        opacity: 0;
+      }
+      .pill {
+        position: absolute;
+        height: 84px;
+        border-radius: 42px;
+        padding: 0 34px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        background: var(--glass-strong);
+        border: 1.5px solid var(--hair);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        opacity: 0;
+        white-space: nowrap;
+      }
+      .dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .kicker {
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
+        font-size: 24px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+      }
+
+      /* hook pill */
+      #hook-pill {
+        left: 50%;
+        top: 46px;
+        margin-left: -230px;
+        width: 460px;
+        justify-content: center;
+      }
+      #hook-pill .ur {
+        font-size: 33px;
+        line-height: 84px;
+        padding-top: 6px;
+      }
+
+      /* event card */
+      #card-event {
+        left: 48px;
+        top: 92px;
+        width: 984px;
+        height: 520px;
+        padding: 36px 40px;
+      }
+      .tiles {
+        display: flex;
+        flex-direction: row-reverse;
+        gap: 20px;
+      }
+      .tile {
+        flex: 1;
+        height: 168px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-end;
+        opacity: 0;
+      }
+      .tile .lab {
+        font-size: 28px;
+        color: var(--ink-3);
+        line-height: 1.6;
+      }
+      .tile .val {
+        font-size: 50px;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+      .tile .val.ur {
+        font-size: 40px;
+        line-height: 1.7;
+      }
+      #mag-row {
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        top: 232px;
+        height: 252px;
+        border-radius: 30px;
+        background: linear-gradient(90deg, rgba(255, 159, 10, 0.16), rgba(255, 159, 10, 0.03));
+        border: 1px solid rgba(255, 159, 10, 0.28);
+        opacity: 0;
+        overflow: hidden;
+      }
+      #mag-num {
+        position: absolute;
+        left: 40px;
+        top: 26px;
+        font-size: 176px;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 1;
+        color: var(--orange);
+      }
+      #mag-lab {
+        position: absolute;
+        right: 36px;
+        top: 26px;
+        font-size: 40px;
+        line-height: 1.8;
+        color: var(--ink);
+      }
+      #mag-sub {
+        position: absolute;
+        left: 46px;
+        bottom: 22px;
+        font-size: 22px;
+      }
+      #seis {
+        position: absolute;
+        left: 330px;
+        top: 96px;
+        width: 620px;
+        height: 140px;
+      }
+
+      /* map card */
+      #card-map {
+        left: 40px;
+        top: 64px;
+        width: 1000px;
+        height: 940px;
+        background: rgba(16, 22, 32, 0.82);
+      }
+      #map-head {
+        position: absolute;
+        left: 36px;
+        right: 36px;
+        top: 26px;
+        height: 70px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #map-svg {
+        position: absolute;
+        left: 20px;
+        top: 104px;
+        width: 960px;
+        height: 820px;
+      }
+      .ctry {
+        fill: #2a2f38;
+        stroke: rgba(255, 255, 255, 0.22);
+        stroke-width: 1.2;
+      }
+      .map-label {
+        font-family: "Noto Nastaliq Urdu", sans-serif;
+        font-size: 30px;
+        fill: rgba(245, 245, 247, 0.62);
+      }
+      .map-label.big {
+        font-size: 36px;
+        fill: #f5f5f7;
+      }
+      .map-num {
+        font-family: "Inter", sans-serif;
+        font-weight: 700;
+      }
+      #depth-card {
+        position: absolute;
+        left: 36px;
+        bottom: 36px;
+        width: 300px;
+        height: 230px;
+        border-radius: 28px;
+        background: rgba(10, 12, 16, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        opacity: 0;
+        overflow: hidden;
+      }
+      #good-pill {
+        right: 36px;
+        bottom: 40px;
+        left: auto;
+        top: auto;
+        position: absolute;
+      }
+
+      /* good news card */
+      #card-good {
+        left: 48px;
+        top: 92px;
+        width: 984px;
+        height: 520px;
+        padding: 40px 48px;
+      }
+      .check-row {
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center;
+        gap: 28px;
+        height: 112px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        opacity: 0;
+      }
+      .check-row:last-child {
+        border-bottom: none;
+      }
+      .check {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: rgba(48, 209, 88, 0.16);
+        border: 2px solid rgba(48, 209, 88, 0.7);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        flex: none;
       }
-      #title {
-        color: #f4f4f5;
-        font-size: 72px;
+      .check-row .ur {
+        font-size: 48px;
+        line-height: 1.9;
+      }
+
+      /* hotspot title */
+      #hot-title {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 34px;
+        text-align: center;
+        opacity: 0;
+      }
+      #hot-title .ur {
+        font-size: 74px;
+        font-weight: 700;
+        line-height: 1.75;
+        text-shadow: 0 6px 30px rgba(0, 0, 0, 0.5);
+      }
+      #hot-line {
+        width: 0px;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--orange);
+        margin: -6px auto 0;
+      }
+
+      /* data card (13 quakes) */
+      #card-data {
+        left: 48px;
+        top: 92px;
+        width: 984px;
+        height: 520px;
+        padding: 36px 44px;
+      }
+      #data-big {
+        position: absolute;
+        left: 44px;
+        top: 110px;
+        font-size: 250px;
+        font-weight: 800;
+        letter-spacing: -0.06em;
+        line-height: 1;
+      }
+      #data-lab {
+        position: absolute;
+        right: 44px;
+        top: 120px;
+        width: 520px;
+        text-align: right;
+      }
+      #data-lab .ur {
+        font-size: 44px;
+        line-height: 1.9;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        height: 60px;
+        padding: 0 24px;
+        border-radius: 30px;
+        background: rgba(10, 132, 255, 0.16);
+        border: 1px solid rgba(10, 132, 255, 0.45);
+        font-size: 30px;
         font-weight: 600;
-        letter-spacing: -0.03em;
+        color: #d6e9ff;
+        opacity: 0;
+        margin-left: 12px;
+      }
+      #dots {
+        position: absolute;
+        left: 44px;
+        right: 44px;
+        bottom: 44px;
+        height: 60px;
+        display: flex;
+        gap: 14px;
+        direction: rtl;
+      }
+      .qdot {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 50% 50%, #ffb340 0%, #ff9f0a 45%, rgba(255, 159, 10, 0.25) 100%);
+        opacity: 0;
+      }
+
+      /* history card */
+      #card-hist {
+        left: 48px;
+        top: 92px;
+        width: 984px;
+        height: 520px;
+        padding: 36px 44px;
+      }
+      #hist-year {
+        position: absolute;
+        right: 44px;
+        top: 40px;
+        font-size: 150px;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 1;
+        opacity: 0;
+      }
+      #hist-kick {
+        position: absolute;
+        left: 44px;
+        top: 52px;
+      }
+      .bar-row {
+        position: absolute;
+        left: 44px;
+        right: 44px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        opacity: 0;
+      }
+      .bar-row .yr {
+        width: 110px;
+        font-size: 30px;
+        font-weight: 600;
+        color: var(--ink-2);
+      }
+      .bar-track {
+        flex: 1;
+        height: 22px;
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.07);
+        position: relative;
+        overflow: hidden;
+      }
+      .bar-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0px;
+        border-radius: 11px;
+      }
+      .bar-row .mv {
+        width: 120px;
+        text-align: right;
+        font-size: 44px;
+        font-weight: 700;
+      }
+      #hist-toll {
+        position: absolute;
+        left: 44px;
+        right: 44px;
+        bottom: 34px;
+        height: 96px;
+        border-radius: 24px;
+        background: rgba(255, 105, 97, 0.08);
+        border: 1px solid rgba(255, 105, 97, 0.28);
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        opacity: 0;
+      }
+      #hist-toll .ur {
+        font-size: 40px;
+        line-height: 1.8;
+      }
+
+      /* CTA card */
+      #card-cta {
+        left: 48px;
+        top: 92px;
+        width: 984px;
+        height: 520px;
+        padding: 40px 44px;
+      }
+      #cta-q {
+        font-size: 56px;
+        font-weight: 700;
+        line-height: 1.85;
+        text-align: right;
+        opacity: 0;
+      }
+      #cta-input {
+        position: absolute;
+        left: 44px;
+        right: 44px;
+        bottom: 150px;
+        height: 110px;
+        border-radius: 55px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1.5px solid rgba(255, 255, 255, 0.16);
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center;
+        padding: 0 18px 0 18px;
+        gap: 22px;
+        opacity: 0;
+      }
+      #cta-avatar {
+        width: 74px;
+        height: 74px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5e5ce6, #0a84ff);
+        flex: none;
+      }
+      #cta-ph {
+        flex: 1;
+        font-size: 36px;
+        line-height: 1.8;
+        color: var(--ink-3);
+        text-align: right;
+        position: relative;
+      }
+      #cta-caret {
+        display: inline-block;
+        width: 3px;
+        height: 44px;
+        background: var(--blue);
+        vertical-align: middle;
+        margin-left: 10px;
+      }
+      #cta-send {
+        width: 74px;
+        height: 74px;
+        border-radius: 50%;
+        background: var(--blue);
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #cta-row {
+        position: absolute;
+        left: 44px;
+        right: 44px;
+        bottom: 44px;
+        height: 70px;
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center;
+        gap: 26px;
+        opacity: 0;
+      }
+      #cta-row .ic {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 28px;
+        color: var(--ink-2);
+        font-weight: 600;
+      }
+
+      /* captions */
+      #captions {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 200px;
+      }
+      .cap {
+        position: absolute;
+        left: 70px;
+        right: 70px;
+        top: 0;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-family: "Noto Nastaliq Urdu", "Inter", sans-serif;
+        direction: rtl;
+        font-size: 58px;
+        font-weight: 700;
+        line-height: 1.9;
+        color: #fff;
+        text-shadow:
+          0 2px 4px rgba(0, 0, 0, 0.55),
+          0 8px 30px rgba(0, 0, 0, 0.55);
+        opacity: 0;
+      }
+      .cap .hl {
+        color: var(--orange);
+      }
+      .cap .hl-g {
+        color: #63e6a0;
+      }
+      .cap .hl-b {
+        color: #7cc4ff;
+      }
+      .cap .num {
+        font-weight: 700;
+        font-size: 54px;
+        margin: 0 0.22em;
       }
     </style>
   </head>
@@ -39,17 +703,466 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="10"
-      data-width="1920"
-      data-height="1080"
+      data-duration="44.66"
+      data-width="1080"
+      data-height="1920"
     >
-      <h1 id="title" class="clip" data-start="0" data-duration="10" data-track-index="0">Hello from HyperFrames</h1>
+      <!-- ================= CAMERA LAYER ================= -->
+      <div id="camera">
+        <div id="backdrop" data-layout-allow-overflow></div>
+        <div id="behind" data-layout-allow-occlusion>PANAMA</div>
+        <div id="subject-wrap">
+          <div id="subject-shadow"></div>
+          <video
+            id="subject"
+            class="clip"
+            src="assets/footage/subject.webm"
+            muted
+            playsinline
+            data-start="0"
+            data-duration="44.66"
+            data-track-index="0"
+          ></video>
+        </div>
+        <div id="backdrop-floor" data-layout-allow-overflow></div>
+        <div id="vignette"></div>
+      </div>
+
+      <!-- ================= GRAPHICS ================= -->
+      <!-- 0.25 – 3.9  hook pill -->
+      <div id="hook-pill" class="pill">
+        <div class="dot" style="background: var(--red); box-shadow: 0 0 18px var(--red)"></div>
+        <span class="kicker" style="color: var(--ink-2)">Breaking</span>
+        <span class="ur">پاناما · زلزلہ</span>
+      </div>
+
+      <!-- 3.9 – 10.6  event card -->
+      <div id="card-event" class="glass">
+        <div class="tiles">
+          <div class="tile" id="t-date">
+            <span class="lab ur">تاریخ</span>
+            <span class="val"><span class="num">4</span> <span class="ur" style="font-size: 38px">اکتوبر</span></span>
+          </div>
+          <div class="tile" id="t-time">
+            <span class="lab ur">مقامی وقت</span>
+            <span class="val ur">صبح <span class="num" style="font-size: 50px; font-weight: 700">8</span> بجے</span>
+          </div>
+          <div class="tile" id="t-place">
+            <span class="lab ur">مقام</span>
+            <span class="val ur">بحرالکاہل</span>
+          </div>
+        </div>
+        <div id="mag-row">
+          <div id="mag-num" class="num">0.0</div>
+          <div id="mag-lab" class="ur">شدت</div>
+          <div id="mag-sub" class="kicker">Magnitude</div>
+          <svg id="seis" viewBox="0 0 620 140">
+            <path id="seis-path" d="" fill="none" stroke="#ff9f0a" stroke-width="3.5" stroke-linejoin="round" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- 10.6 – 24.3  map card -->
+      <div id="card-map" class="glass">
+        <div id="map-head">
+          <span class="kicker">Epicentre · 4 Oct 2026</span>
+          <span class="ur" style="font-size: 36px; line-height: 70px">زلزلے کا مرکز</span>
+        </div>
+        <svg id="map-svg" viewBox="0 0 960 820">
+          <defs>
+            <radialGradient id="sea" cx="40%" cy="70%" r="80%">
+              <stop offset="0%" stop-color="#14304f" />
+              <stop offset="100%" stop-color="#0b1622" />
+            </radialGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
+          </defs>
+          <rect width="960" height="820" fill="url(#sea)" rx="24" />
+          <path id="grat" data-layout-allow-overflow d="" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+          <g id="ctry-other" data-layout-allow-overflow>
+            <path id="c-ni" class="ctry" d="" />
+            <path id="c-co" class="ctry" d="" />
+            <path id="c-ec" class="ctry" d="" />
+          </g>
+          <path id="c-cr" data-layout-allow-overflow class="ctry" d="" />
+          <path id="c-pa" data-layout-allow-overflow class="ctry" d="" />
+          <text class="map-label" x="122" y="76" text-anchor="middle">نکاراگوا</text>
+          <text class="map-label" x="872" y="540" text-anchor="middle">کولمبیا</text>
+          <text id="lab-cr" class="map-label big" x="214" y="140" text-anchor="middle">کوسٹاریکا</text>
+          <text id="lab-pa" class="map-label big" x="585" y="372" text-anchor="middle">پاناما</text>
+          <text class="map-label" x="150" y="560" text-anchor="middle" style="font-size: 34px; fill: rgba(124, 196, 255, 0.55)">بحرالکاہل</text>
+          <!-- cities (population) -->
+          <g id="cities" opacity="0">
+            <circle cx="670.3" cy="289.9" r="10" fill="#7cc4ff" />
+            <circle cx="670.3" cy="289.9" r="22" fill="none" stroke="#7cc4ff" stroke-opacity="0.5" stroke-width="2" />
+            <text class="map-label" x="670" y="262" text-anchor="middle" style="fill: #cfe6ff; font-size: 28px">پاناما سٹی</text>
+            <circle cx="271.4" cy="205.9" r="10" fill="#7cc4ff" />
+            <circle cx="271.4" cy="205.9" r="22" fill="none" stroke="#7cc4ff" stroke-opacity="0.5" stroke-width="2" />
+            <text class="map-label" x="330" y="232" text-anchor="start" style="fill: #cfe6ff; font-size: 28px">سان ہوزے</text>
+          </g>
+          <!-- Punta Burica pin -->
+          <g id="pin-burica" opacity="0">
+            <circle cx="377.9" cy="373.8" r="11" fill="#f5f5f7" stroke="#0b1622" stroke-width="4" />
+            <text class="map-label" x="400" y="352" text-anchor="start" style="fill: #f5f5f7; font-size: 30px">پونتا بوریکا</text>
+          </g>
+          <!-- distance line -->
+          <line id="dist-line" x1="377.9" y1="385" x2="377.9" y2="596" stroke="#f5f5f7" stroke-width="3" stroke-dasharray="10 10" opacity="0.9" />
+          <g id="dist-label" opacity="0">
+            <rect x="400" y="456" width="208" height="64" rx="32" fill="rgba(10,12,16,0.85)" stroke="rgba(255,255,255,0.18)" />
+            <text x="504" y="499" text-anchor="middle" class="map-num" font-size="32" fill="#f5f5f7"><tspan id="dist-num">0</tspan> km</text>
+          </g>
+          <!-- epicentre -->
+          <g id="epi" opacity="0">
+            <circle id="ring1" cx="377.9" cy="606.7" r="20" fill="none" stroke="#ff9f0a" stroke-width="3" />
+            <circle id="ring2" cx="377.9" cy="606.7" r="20" fill="none" stroke="#ff9f0a" stroke-width="3" />
+            <circle id="ring3" cx="377.9" cy="606.7" r="20" fill="none" stroke="#ff9f0a" stroke-width="3" />
+            <circle cx="377.9" cy="606.7" r="26" fill="#ff9f0a" filter="url(#glow)" opacity="0.8" />
+            <circle cx="377.9" cy="606.7" r="13" fill="#ffcf80" />
+            <text x="410" y="660" class="map-num" font-size="34" fill="#ff9f0a">M 5.1</text>
+          </g>
+          <!-- far from population -->
+          <g id="far-label" opacity="0">
+            <line x1="392" y1="596" x2="660" y2="302" stroke="#7cc4ff" stroke-width="2" stroke-dasharray="4 8" />
+            <line x1="366" y1="594" x2="276" y2="220" stroke="#7cc4ff" stroke-width="2" stroke-dasharray="4 8" />
+          </g>
+        </svg>
+        <div id="depth-card">
+          <div style="position: absolute; right: 22px; top: 12px" class="ur"><span style="font-size: 30px; line-height: 1.8; color: var(--ink-2)">گہرائی</span></div>
+          <div class="num" style="position: absolute; left: 24px; top: 30px; font-size: 64px; font-weight: 800; letter-spacing: -0.03em">
+            <span id="depth-num">0</span><span style="font-size: 30px; font-weight: 600; color: var(--ink-2)"> km</span>
+          </div>
+          <div style="position: absolute; left: 24px; right: 24px; bottom: 24px; height: 92px; border-radius: 14px; background: linear-gradient(180deg, #3a2a1a, #1b130c); overflow: hidden">
+            <div style="position: absolute; left: 0; right: 0; top: 0; height: 10px; background: #5a4630"></div>
+            <div id="depth-drop" style="position: absolute; left: 50%; top: 10px; width: 3px; height: 0px; background: #ff9f0a; margin-left: -1.5px"></div>
+            <div id="depth-pt" style="position: absolute; left: 50%; top: 52px; width: 18px; height: 18px; border-radius: 50%; margin-left: -9px; background: #ff9f0a; box-shadow: 0 0 16px #ff9f0a; opacity: 0"></div>
+          </div>
+        </div>
+        <div id="good-pill" class="pill">
+          <div class="dot" style="background: var(--green); box-shadow: 0 0 16px var(--green)"></div>
+          <span class="ur" style="font-size: 36px; line-height: 84px; padding-top: 6px">آبادی سے بہت دور</span>
+        </div>
+      </div>
+
+      <!-- 24.3 – 27.0  good news -->
+      <div id="card-good" class="glass">
+        <div style="display: flex; flex-direction: row-reverse; align-items: center; gap: 16px; height: 80px; margin-bottom: 14px">
+          <div class="dot" style="background: var(--green); box-shadow: 0 0 16px var(--green)"></div>
+          <span class="ur" style="font-size: 40px; line-height: 1.8; color: #63e6a0">اچھی خبر</span>
+          <span class="kicker" style="margin-right: auto">Good news</span>
+        </div>
+        <div class="check-row" id="ck1">
+          <div class="check"><svg width="34" height="34" viewBox="0 0 34 34"><path d="M7 18 L14 25 L27 10" fill="none" stroke="#30d158" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+          <span class="ur">کوئی نقصان نہیں</span>
+        </div>
+        <div class="check-row" id="ck2">
+          <div class="check"><svg width="34" height="34" viewBox="0 0 34 34"><path d="M7 18 L14 25 L27 10" fill="none" stroke="#30d158" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+          <span class="ur">کوئی سونامی نہیں</span>
+        </div>
+        <div class="check-row" id="ck3">
+          <div class="check"><svg width="34" height="34" viewBox="0 0 34 34"><path d="M7 18 L14 25 L27 10" fill="none" stroke="#30d158" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+          <span class="ur">کوئی خطرہ نہیں</span>
+        </div>
+      </div>
+
+      <!-- 27.0 – 28.8  hotspot title (hero) -->
+      <div id="hot-title">
+        <div class="ur">زلزلوں کا گڑھ</div>
+        <div id="hot-line"></div>
+      </div>
+
+      <!-- 28.8 – 35.0  data card -->
+      <div id="card-data" class="glass">
+        <div style="display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between">
+          <span class="ur" style="font-size: 36px; line-height: 1.8; color: var(--ink-2)">صرف اسی سمندری حصے میں</span>
+          <div><span class="chip num" id="chip-year">2026</span><span class="chip num" id="chip-mag">M 4.5+</span></div>
+        </div>
+        <div id="data-big" class="num">0</div>
+        <div id="data-lab"><div class="ur" style="font-size: 34px; color: var(--ink-2)"><span class="num" style="font-size: 32px; margin: 0 0.2em">4.5</span> سے زیادہ شدت کے</div><div class="ur">زلزلے آ چکے ہیں</div></div>
+        <div id="dots"></div>
+      </div>
+
+      <!-- 35.0 – 40.4  history card -->
+      <div id="card-hist" class="glass">
+        <div id="hist-kick" class="kicker">Same region · history</div>
+        <div id="hist-year" class="num">1991</div>
+        <div class="bar-row" id="bar-a" style="top: 220px">
+          <span class="yr num">1991</span>
+          <div class="bar-track"><div class="bar-fill" id="fill-a" style="background: linear-gradient(90deg, #ff9f0a, #ff6961)"></div></div>
+          <span class="mv num" style="color: #ffb38a">7.4</span>
+        </div>
+        <div class="bar-row" id="bar-b" style="top: 300px">
+          <span class="yr num">2026</span>
+          <div class="bar-track"><div class="bar-fill" id="fill-b" style="background: #ff9f0a"></div></div>
+          <span class="mv num" style="color: #ffcf80">5.1</span>
+        </div>
+        <div id="hist-toll">
+          <span class="ur"><span class="num" style="font-size: 44px; font-weight: 700">23</span> افراد جاں بحق</span>
+          <span class="kicker" style="letter-spacing: 0.1em">In memoriam</span>
+        </div>
+      </div>
+
+      <!-- 40.4 – end  CTA -->
+      <div id="card-cta" class="glass">
+        <div id="cta-q" class="ur">کیا آپ نے کبھی زلزلہ محسوس کیا ہے؟</div>
+        <div id="cta-input">
+          <div id="cta-avatar"></div>
+          <div id="cta-ph" class="ur">اپنا تجربہ کمنٹ میں لکھیں<span id="cta-caret"></span></div>
+          <div id="cta-send">
+            <svg width="36" height="36" viewBox="0 0 36 36"><path d="M8 18 L28 18 M20 10 L28 18 L20 26" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </div>
+        </div>
+        <div id="cta-row">
+          <span class="ic"><svg width="34" height="34" viewBox="0 0 34 34"><path d="M5 8 Q5 5 8 5 H26 Q29 5 29 8 V20 Q29 23 26 23 H14 L8 29 V23 Q5 23 5 20 Z" fill="none" stroke="rgba(245,245,247,0.72)" stroke-width="2.6" stroke-linejoin="round" /></svg>Comment</span>
+          <span class="kicker" style="margin-right: auto">Comments</span>
+        </div>
+      </div>
+
+      <!-- captions -->
+      <div id="captions"></div>
+
+      <!-- ================= AUDIO ================= -->
+      <audio id="voice" src="assets/audio/voice.wav" data-start="0" data-duration="44.66" data-track-index="1" data-volume="1"></audio>
+      <audio id="music" src="assets/audio/music_bed.wav" data-start="0" data-duration="44.66" data-track-index="2" data-volume="0.11"></audio>
+      <!-- SFX inserted by script below are declared statically here for the mixer -->
+      <audio id="sfx-impact-0" src="assets/audio/impact.wav" data-start="0.2" data-duration="2.2" data-track-index="3" data-volume="0.38"></audio>
+      <audio id="sfx-rumble-0" src="assets/audio/rumble.wav" data-start="1.25" data-duration="3.2" data-track-index="4" data-volume="0.5"></audio>
+      <audio id="sfx-whoosh-0" src="assets/audio/whoosh.wav" data-start="3.6" data-duration="0.7" data-track-index="3" data-volume="0.42"></audio>
+      <audio id="sfx-click-0" src="assets/audio/click.wav" data-start="4.15" data-duration="0.08" data-track-index="5" data-volume="0.5"></audio>
+      <audio id="sfx-click-1" src="assets/audio/click.wav" data-start="6.2" data-duration="0.08" data-track-index="5" data-volume="0.5"></audio>
+      <audio id="sfx-click-2" src="assets/audio/click.wav" data-start="7.45" data-duration="0.08" data-track-index="5" data-volume="0.5"></audio>
+      <audio id="sfx-impact-1" src="assets/audio/impact.wav" data-start="8.5" data-duration="2.2" data-track-index="3" data-volume="0.3"></audio>
+      <audio id="sfx-whoosh-1" src="assets/audio/whoosh.wav" data-start="10.3" data-duration="0.7" data-track-index="4" data-volume="0.42"></audio>
+      <audio id="sfx-click-3" src="assets/audio/click.wav" data-start="12.6" data-duration="0.08" data-track-index="5" data-volume="0.45"></audio>
+      <audio id="sfx-ping-0" src="assets/audio/ping.wav" data-start="14.75" data-duration="0.9" data-track-index="5" data-volume="0.35"></audio>
+      <audio id="sfx-whoosh-2" src="assets/audio/whoosh_soft.wav" data-start="16.95" data-duration="0.55" data-track-index="3" data-volume="0.4"></audio>
+      <audio id="sfx-click-4" src="assets/audio/click.wav" data-start="18.85" data-duration="0.08" data-track-index="5" data-volume="0.45"></audio>
+      <audio id="sfx-ping-1" src="assets/audio/ping.wav" data-start="21.0" data-duration="0.9" data-track-index="5" data-volume="0.32"></audio>
+      <audio id="sfx-whoosh-3" src="assets/audio/whoosh.wav" data-start="24.0" data-duration="0.7" data-track-index="3" data-volume="0.4"></audio>
+      <audio id="sfx-click-5" src="assets/audio/click.wav" data-start="24.9" data-duration="0.08" data-track-index="5" data-volume="0.45"></audio>
+      <audio id="sfx-click-6" src="assets/audio/click.wav" data-start="25.75" data-duration="0.08" data-track-index="5" data-volume="0.45"></audio>
+      <audio id="sfx-click-7" src="assets/audio/click.wav" data-start="26.45" data-duration="0.08" data-track-index="5" data-volume="0.45"></audio>
+      <audio id="sfx-whoosh-4" src="assets/audio/whoosh_soft.wav" data-start="26.8" data-duration="0.55" data-track-index="4" data-volume="0.36"></audio>
+      <audio id="sfx-whoosh-5" src="assets/audio/whoosh.wav" data-start="28.5" data-duration="0.7" data-track-index="3" data-volume="0.4"></audio>
+      <audio id="sfx-click-8" src="assets/audio/click.wav" data-start="30.45" data-duration="0.08" data-track-index="5" data-volume="0.45"></audio>
+      <audio id="sfx-click-9" src="assets/audio/click.wav" data-start="31.65" data-duration="0.08" data-track-index="5" data-volume="0.45"></audio>
+      <audio id="sfx-impact-2" src="assets/audio/impact.wav" data-start="33.2" data-duration="2.2" data-track-index="4" data-volume="0.26"></audio>
+      <audio id="sfx-whoosh-6" src="assets/audio/whoosh_soft.wav" data-start="34.8" data-duration="0.55" data-track-index="3" data-volume="0.36"></audio>
+      <audio id="sfx-click-10" src="assets/audio/click.wav" data-start="36.65" data-duration="0.08" data-track-index="5" data-volume="0.45"></audio>
+      <audio id="sfx-whoosh-7" src="assets/audio/whoosh_soft.wav" data-start="40.2" data-duration="0.55" data-track-index="4" data-volume="0.36"></audio>
+      <audio id="sfx-ping-2" src="assets/audio/ping.wav" data-start="43.15" data-duration="0.9" data-track-index="5" data-volume="0.32"></audio>
     </div>
+
+    <script src="assets/map-data.js"></script>
     <script>
-      const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#title", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6 }, 0);
-      window.__timelines["main"] = tl;
-      tl.seek(0);
+      (function () {
+        const MAP = window.__MAP__;
+        const FPS = 30;
+        const q = (t) => Math.round(t * FPS) / FPS;
+        const $ = (s) => document.querySelector(s);
+
+        // ---- map data ----
+        ["pa", "cr", "co", "ni", "ec"].forEach((k) => $("#c-" + k).setAttribute("d", MAP.countries[k]));
+        $("#grat").setAttribute("d", MAP.grat);
+
+        // ---- deterministic seismograph trace ----
+        (function () {
+          let d = "M0 70";
+          for (let i = 1; i <= 310; i++) {
+            const x = i * 2;
+            const burst = Math.exp(-Math.pow((x - 250) / 70, 2));
+            const tail = Math.exp(-Math.pow((x - 330) / 160, 2)) * 0.35;
+            const amp = 4 + 58 * burst + 40 * tail;
+            const y = 70 + amp * Math.sin(i * 1.7) * Math.cos(i * 0.31 + 0.6);
+            d += " L" + x + " " + y.toFixed(1);
+          }
+          $("#seis-path").setAttribute("d", d);
+        })();
+
+        // ---- quake dots ----
+        const dots = $("#dots");
+        for (let i = 0; i < 13; i++) {
+          const el = document.createElement("div");
+          el.className = "qdot";
+          dots.appendChild(el);
+        }
+
+        // ---- captions (phrase-level, from transcript) ----
+        const CAPS = [
+          [0.05, 2.31, 'پاناما کے قریب سمندر میں <span class="hl">زمین ہل گئی</span>'],
+          [2.31, 3.95, 'کتنا <span class="hl">خطرناک</span> تھا یہ زلزلہ؟'],
+          [3.95, 5.62, '<span class="num">4</span> اکتوبر کو مقامی وقت'],
+          [5.62, 8.45, "کے مطابق صبح آٹھ بجے بحرالکاہل میں"],
+          [8.45, 10.81, '<span class="num hl">5.1</span> شدت کا زلزلہ آیا'],
+          [10.81, 12.53, "اس کا مرکز پاناما"],
+          [12.53, 14.64, "کوسٹاریکا کی سرحد کے قریب"],
+          [14.64, 17.02, "پونتا بوریکا سے تقریباً"],
+          [17.02, 18.73, '<span class="num">295</span> کلومیٹر جنوب میں'],
+          [18.73, 20.92, 'صرف <span class="num hl">10</span> کلومیٹر گہرائی پر تھا'],
+          [20.92, 22.35, '<span class="hl-g">اچھی خبر</span> یہ کہ'],
+          [22.35, 24.48, "مرکزی آبادی سے بہت دور سمندر میں تھا"],
+          [24.48, 25.65, "اس لیے نہ کوئی نقصان ہوا"],
+          [25.65, 27.16, 'نہ <span class="hl-g">سونامی</span>، نہ خطرہ'],
+          [27.16, 28.84, 'یہ علاقہ <span class="hl">زلزلوں کا گڑھ</span> ہے'],
+          [28.84, 30.4, "صرف اسی سمندری حصے میں"],
+          [30.4, 32.54, '<span class="num">2026</span> میں <span class="num">4.5</span> سے'],
+          [32.54, 35.05, 'زیادہ شدت کے <span class="num hl">13</span> زلزلے آ چکے ہیں'],
+          [35.05, 38.36, '<span class="num">1991</span> میں یہاں <span class="num hl">7.4</span> کا زلزلہ آیا تھا'],
+          [38.36, 40.55, 'جس میں <span class="num">23</span> افراد جاں بحق ہوئے تھے'],
+          [40.55, 43.12, 'کیا آپ نے کبھی <span class="hl-b">زلزلہ محسوس</span> کیا ہے؟'],
+          [43.12, 44.66, '<span class="hl-b">کمنٹ</span> سیکشن میں ضرور بتائیں'],
+        ];
+        const capHost = $("#captions");
+        CAPS.forEach((c, i) => {
+          const el = document.createElement("div");
+          el.className = "cap";
+          el.id = "cap-" + i;
+          el.innerHTML = c[2];
+          capHost.appendChild(el);
+        });
+
+        const tl = gsap.timeline({ paused: true });
+
+        // ---------- layout modes: subject framing + caption position ----------
+        // hero: speaker full frame  · B: speaker lowered, card band on top  · C: map, speaker smaller at bottom
+        const MODE = {
+          hero: { y: 0, scale: 1, cy: 1215 },
+          B: { y: 470, scale: 1, cy: 1640 },
+          C: { y: 773, scale: 0.78, cy: 1722 },
+        };
+        const toMode = (m, t, d = 0.9) => {
+          tl.to("#subject-wrap", { y: MODE[m].y, scale: MODE[m].scale, duration: d, ease: "power3.inOut" }, q(t));
+          tl.to("#captions", { y: MODE[m].cy, duration: d, ease: "power3.inOut" }, q(t));
+        };
+        tl.set("#subject-wrap", { y: 0, scale: 1 }, 0);
+        tl.set("#captions", { y: MODE.hero.cy }, 0);
+
+        // gentle push-in during the hook
+        tl.fromTo("#subject-wrap", { scale: 1 }, { scale: 1.04, duration: 3.6, ease: "none" }, 0);
+        toMode("B", 3.55);
+        toMode("C", 10.25);
+        toMode("B", 23.95);
+        toMode("hero", 26.75);
+        tl.to("#subject-wrap", { scale: 1.06, duration: 1.6, ease: "sine.inOut" }, q(27.6));
+        toMode("B", 28.45);
+
+        // ---------- captions ----------
+        CAPS.forEach((c, i) => {
+          const sel = "#cap-" + i;
+          tl.fromTo(sel, { opacity: 0, y: 22, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.28, ease: "power2.out" }, q(c[0]));
+          const out = i < CAPS.length - 1 ? CAPS[i + 1][0] - 0.14 : c[1] - 0.3;
+          tl.to(sel, { opacity: 0, y: -10, filter: "blur(6px)", duration: 0.16, ease: "power1.in" }, q(out));
+        });
+
+        // ---------- HOOK (0 – 3.9) ----------
+        tl.fromTo("#hook-pill", { opacity: 0, y: -30, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, q(0.25));
+        tl.fromTo("#behind", { opacity: 0, y: 40, scale: 1.08 }, { opacity: 1, y: 0, scale: 1, duration: 1.1, ease: "power3.out" }, q(0.35));
+        // camera shake on "زمین ہل گئی" — deterministic decaying tremor
+        (function () {
+          const t0 = 1.3, dur = 1.0, steps = 24;
+          for (let i = 0; i <= steps; i++) {
+            const p = i / steps, a = 16 * Math.pow(1 - p, 1.6);
+            tl.to("#camera", { x: a * Math.sin(i * 2.3), y: a * 0.6 * Math.cos(i * 3.1), duration: dur / steps, ease: "none" }, q(t0 + p * dur));
+          }
+          tl.to("#camera", { x: 0, y: 0, duration: 0.1 }, q(t0 + dur + 0.04));
+        })();
+        tl.to("#hook-pill", { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, q(3.45));
+        tl.to("#behind", { opacity: 0, y: -60, duration: 0.5, ease: "power2.in" }, q(3.4));
+
+        // ---------- EVENT CARD (3.9 – 10.6) ----------
+        const cardIn = (sel, t) => tl.fromTo(sel, { opacity: 0, y: -40, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" }, q(t));
+        const cardOut = (sel, t) => tl.to(sel, { opacity: 0, y: -30, scale: 0.97, duration: 0.4, ease: "power2.in" }, q(t));
+        cardIn("#card-event", 3.75);
+        tl.fromTo("#t-date", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, q(4.1));
+        tl.fromTo("#t-time", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, q(6.15));
+        tl.fromTo("#t-place", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, q(7.4));
+        tl.fromTo("#mag-row", { opacity: 0, clipPath: "inset(0 100% 0 0 round 30px)" }, { opacity: 1, clipPath: "inset(0 0% 0 0 round 30px)", duration: 0.7, ease: "power3.inOut" }, q(8.4));
+        (function () {
+          const o = { v: 0 };
+          tl.to(o, { v: 5.1, duration: 1.0, ease: "power2.out", onUpdate: () => ($("#mag-num").textContent = o.v.toFixed(1)) }, q(8.55));
+          const p = $("#seis-path");
+          const L = 3400;
+          tl.fromTo(p, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 2.0, ease: "power1.inOut" }, q(8.6));
+        })();
+        cardOut("#card-event", 10.15);
+
+        // ---------- MAP (10.6 – 24.3) ----------
+        tl.fromTo("#card-map", { opacity: 0, y: -50, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "power3.out" }, q(10.45));
+        tl.to("#c-pa", { fill: "#3d6fb3", stroke: "#9cc7ff", duration: 0.6, ease: "power2.out" }, q(10.95));
+        tl.fromTo("#lab-pa", { opacity: 0 }, { opacity: 1, duration: 0.4 }, q(11.0));
+        tl.fromTo("#lab-cr", { opacity: 0 }, { opacity: 1, duration: 0.4 }, q(12.6));
+        tl.to("#c-cr", { fill: "#3a4d66", stroke: "#9cc7ff", duration: 0.6, ease: "power2.out" }, q(12.6));
+        tl.fromTo("#pin-burica", { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.5, ease: "back.out(2)" }, q(14.75));
+        tl.fromTo("#dist-line", { strokeDashoffset: 211, strokeDasharray: "10 10" }, { strokeDashoffset: 0, duration: 0.01 }, 0);
+        tl.fromTo("#dist-line", { attr: { y2: 385 } }, { attr: { y2: 596 }, duration: 1.2, ease: "power2.inOut" }, q(16.95));
+        tl.fromTo("#dist-label", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, q(17.1));
+        (function () {
+          const o = { v: 0 };
+          tl.to(o, { v: 295, duration: 1.1, ease: "power2.out", onUpdate: () => ($("#dist-num").textContent = Math.round(o.v)) }, q(17.1));
+        })();
+        tl.fromTo("#epi", { opacity: 0, scale: 0.4, transformOrigin: "377.9px 606.7px" }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, q(17.9));
+        ["#ring1", "#ring2", "#ring3"].forEach((r, i) => {
+          tl.fromTo(r, { attr: { r: 20 }, opacity: 0.9 }, { attr: { r: 120 }, opacity: 0, duration: 1.8, ease: "power1.out", repeat: 2 }, q(18.0 + i * 0.6));
+        });
+        tl.fromTo("#depth-card", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, q(18.8));
+        tl.to("#depth-drop", { height: 42, duration: 0.8, ease: "power2.inOut" }, q(19.1));
+        tl.fromTo("#depth-pt", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, q(19.85));
+        (function () {
+          const o = { v: 0 };
+          tl.to(o, { v: 10, duration: 0.8, ease: "power2.out", onUpdate: () => ($("#depth-num").textContent = Math.round(o.v)) }, q(19.1));
+        })();
+        tl.to("#depth-card", { opacity: 0, y: 20, duration: 0.35, ease: "power2.in" }, q(20.85));
+        tl.fromTo("#good-pill", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, q(21.0));
+        tl.to("#cities", { opacity: 1, duration: 0.6, ease: "power2.out" }, q(22.35));
+        tl.fromTo("#far-label", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.out" }, q(22.6));
+        tl.to("#card-map", { opacity: 0, y: -40, scale: 0.97, duration: 0.45, ease: "power2.in" }, q(23.8));
+
+        // ---------- GOOD NEWS (24.3 – 27.0) ----------
+        cardIn("#card-good", 24.15);
+        [["#ck1", 24.9], ["#ck2", 25.75], ["#ck3", 26.45]].forEach(([s, t]) => {
+          tl.fromTo(s, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, q(t));
+          tl.fromTo(s + " .check", { scale: 0.4 }, { scale: 1, duration: 0.5, ease: "back.out(2.4)" }, q(t));
+        });
+        cardOut("#card-good", 26.75);
+
+        // ---------- HOTSPOT (hero, 27.0 – 28.8) ----------
+        tl.fromTo("#hot-title", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, q(27.2));
+        tl.to("#hot-line", { width: 420, duration: 0.6, ease: "power3.inOut" }, q(27.75));
+        tl.to("#hot-title", { opacity: 0, y: -20, duration: 0.35, ease: "power2.in" }, q(28.5));
+
+        // ---------- DATA (28.8 – 35.0) ----------
+        cardIn("#card-data", 28.7);
+        tl.fromTo("#chip-year", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, q(30.45));
+        tl.fromTo("#chip-mag", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, q(31.65));
+        (function () {
+          const o = { v: 0 };
+          tl.to(o, { v: 13, duration: 1.0, ease: "power2.out", onUpdate: () => ($("#data-big").textContent = Math.round(o.v)) }, q(33.2));
+        })();
+        tl.fromTo("#data-big", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }, q(33.15));
+        tl.fromTo(".qdot", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2.2)", stagger: 0.075 }, q(33.25));
+        cardOut("#card-data", 34.75);
+
+        // ---------- HISTORY (35.0 – 40.4) ----------
+        cardIn("#card-hist", 35.0);
+        tl.fromTo("#hist-year", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" }, q(35.15));
+        tl.fromTo("#bar-a", { opacity: 0 }, { opacity: 1, duration: 0.3 }, q(36.6));
+        tl.fromTo("#bar-b", { opacity: 0 }, { opacity: 1, duration: 0.3 }, q(36.75));
+        // bar lengths proportional to the spoken magnitudes (7.4 vs 5.1) on a 0–8 scale
+        tl.to("#fill-a", { width: (7.4 / 8) * 560, duration: 0.9, ease: "power3.out" }, q(36.65));
+        tl.to("#fill-b", { width: (5.1 / 8) * 560, duration: 0.9, ease: "power3.out" }, q(36.8));
+        tl.fromTo("#hist-toll", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, q(38.45));
+        cardOut("#card-hist", 40.15);
+
+        // ---------- CTA (40.4 – end) ----------
+        cardIn("#card-cta", 40.4);
+        tl.fromTo("#cta-q", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, q(40.6));
+        tl.fromTo("#cta-input", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, q(43.1));
+        tl.fromTo("#cta-row", { opacity: 0 }, { opacity: 1, duration: 0.5 }, q(43.4));
+        tl.fromTo("#cta-caret", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "steps(1)", repeat: 2, yoyo: true }, q(43.4));
+        tl.fromTo("#cta-send", { scale: 1 }, { scale: 1.12, duration: 0.3, ease: "sine.inOut", yoyo: true, repeat: 1 }, q(43.9));
+
+        window.__timelines["main"] = tl;
+      })();
     </script>
   </body>
 </html>
